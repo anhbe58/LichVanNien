@@ -42,7 +42,6 @@
 *.dSYM/
 *.su
 *.idb
-*.pdb
 *.bk
 *.asm
 *.ihx
@@ -54,8 +53,6 @@
 *.sym
 *.log
 *.spy
-*.wdb
-*.wed
 *.dep
 
 
