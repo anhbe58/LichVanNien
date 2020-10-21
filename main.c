@@ -3,16 +3,39 @@
  * Copyright (c) 2002-2005 STMicroelectronics
  */
 #include "stm8s.h"
-//G B4
-//A B2
-//B B1
+
+//E B7
 //C B5
 //D B6
-//E B7
+//G B4
 //F B3
+//A B2
+//B B1
+//0b00101000
+
 
 uint8_t led7_b[10]     = {0b00010000,0b11011100,0b00101000,0b10001000,0b11000100,0b10000010,0b00000010,0b11011000,0b00000000,0b10000000};
-uint8_t led7_d[10]     = {0b00010000,0b11011100,0b00101000,0b10001000,0b11000100,0b10000001,0b00000001,0b11011000,0b00000000,0b10000000};
+
+
+//B B7
+//A B6
+//F B5
+//G B4
+//C B3
+//D B2
+
+//E B0
+uint8_t led7_d[10] = {0b00010000,0b01110111,0b00101000,0b00100001,0b01000101,0b10000001,0b10000000,0b00110111,0b00000000,0b00000001};
+
+//E B7
+//D B6
+//C B5
+//G B4
+//F B3
+//A B2
+
+//B B0
+uint8_t led7_d_1[10] = {0b00010000,0b11011110,0b00101000,0b10001000,0b11000100,0b10000001,0b00000001,0b11011010,0b00000000,0b10000000};
 //G1 MIN DV
 //E3 MIN CHUC
 //C7 HOUR DV
@@ -31,36 +54,257 @@ uint8_t led7_d[10]     = {0b00010000,0b11011100,0b00101000,0b10001000,0b11000100
 //C1 DUONG NAM CHUC
 //A3 DUONG NAM DV
 //A2 SECOND
+#define DAY 0
+#define DATE_X 1
+#define DATE_Y 2
+#define MONTH_X 3
+#define MONTH_Y 4
+#define YEAR_X 5
+#define YEAR_Y 6
+#define HOUR_X 7
+#define HOUR_Y 8
+#define MIN_X 9
+#define MIN_Y 10
+#define AM_D_X 11
+#define AM_D_Y 12
+#define AM_M_X 13
+#define AM_M_Y 14
+#define TEMP_X 15
+#define TEMP_Y 16
+#define DOT_SEC 17
+//G1 MIN DV
+//G0 AM NGAY CHUC
+
+//E7 THU
+//E5 AM THANG DV
+//E3 MIN CHUC
+
+//A6 DUONG NGAY CHUC
+//A5 DUONG NGAY DV
+//A4 HOUR CHUC
+//A3 DUONG NAM DV
+//A2 SECOND
+//A1 DUONG THANG CHUC
+
+//C7 HOUR DV
+//C6 AM NGAY DV
+//C5 DUONG THANG DV
+//C4 TEMPERATURE CHUC
+//C3 AM THANG CHUC
+//C2 TEMPERATURE DV
+//C1 DUONG NAM CHUC	
+
+uint8_t DIG[18] = {0};
+uint8_t seg = 0, value = 99, n = 0;
+uint8_t data[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
+INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
+{
+	switch(seg)
+	{
+		case 1:
+		{
+			GPIOB->ODR  =    led7_b[data[DATE_X]];
+
+			GPIOD->ODR  =    led7_d[data[MIN_X]];
+			
+			GPIOA->ODR = 0b01000100;
+			
+			GPIOC->ODR = 0b00000000;
+		
+			GPIOE->ODR = 0b00001000;
+			GPIOG->ODR = 0b00000000;
+			break;
+		}					
+		case 2:
+		{
+			GPIOB->ODR  =    led7_b[data[DATE_Y]];
+
+			GPIOD->ODR  =    led7_d[data[MIN_Y]];
+			
+			GPIOA->ODR = 0b00100100;
+			
+			GPIOC->ODR = 0b00000000;
+		
+			GPIOE->ODR = 0b00000000;
+			GPIOG->ODR = 0b00000010;
+			break;
+		}						
+		case 3:
+		{
+			GPIOB->ODR  =    led7_b[data[MONTH_X]];
+
+			GPIOD->ODR  =    led7_d_1[data[AM_D_X]];
+						
+			GPIOA->ODR = 0b00000110;
+			
+			GPIOC->ODR = 0b00000000;
+		
+			GPIOE->ODR = 0b00000000;
+			GPIOG->ODR = 0b00000001;
+			break;
+		}
+		case 4:
+		{
+			GPIOB->ODR  =    led7_b[data[MONTH_Y]];
+
+			GPIOD->ODR  =    led7_d_1[data[AM_D_Y]];
+						
+			GPIOA->ODR = 0b00000100;
+			
+			GPIOC->ODR = 0b01100000;
+		
+			GPIOE->ODR = 0b00000000;
+			GPIOG->ODR = 0b00000000;
+			break;
+		}
+		case 5:
+		{
+			GPIOB->ODR  =    led7_b[data[YEAR_X]];
+
+			GPIOD->ODR  =    led7_d_1[data[AM_M_X]];			
+			GPIOA->ODR = 0b00000100;
+			
+			GPIOC->ODR = 0b00001010;
+		
+			GPIOE->ODR = 0b00000000;
+			GPIOG->ODR = 0b00000000;
+			break;
+		}
+		case 6:
+		{
+			GPIOB->ODR  =    led7_b[data[YEAR_Y]];
+
+			GPIOD->ODR  =    led7_d_1[data[AM_M_Y]];			
+						
+			GPIOA->ODR = 0b00001100;
+			
+			GPIOC->ODR = 0b00000000;
+		
+			GPIOE->ODR = 0b00100000;
+			GPIOG->ODR = 0b00000000;
+			break;
+		}
+		case 7:
+		{
+			GPIOB->ODR  =    led7_b[data[HOUR_X]];//data[HOUR_X]
+
+			GPIOD->ODR  =    led7_d_1[data[TEMP_X]];			
+						
+			GPIOA->ODR = 0b00010100;
+			
+			GPIOC->ODR = 0b00010000;
+		
+			GPIOE->ODR = 0b00000000;
+			GPIOG->ODR = 0b00000000;
+			break;
+		}
+		case 8:
+		{
+			GPIOB->ODR  =    led7_b[data[DAY]];
+
+			GPIOD->ODR  =    led7_d[data[HOUR_Y]];	
+						
+			GPIOA->ODR = 0b00000100;
+			
+			GPIOC->ODR = 0b10000000;
+		
+			GPIOE->ODR = 0b10000000;
+			GPIOG->ODR = 0b00000000;
+			break;
+		}
+		case 9:
+		{
+			GPIOD->ODR  =    led7_d_1[data[TEMP_Y]];
+						
+			GPIOA->ODR = 0b00000000;
+			
+			GPIOC->ODR = 0b00000100;
+		
+			GPIOE->ODR = 0b00000000;
+			GPIOG->ODR = 0b00000000;
+			break;
+		}
+	}
+
+	//G1 MIN DV
+	//G0 AM NGAY CHUC
+	//GPIOG->ODR = 0b00000000 | (DIG[MIN_Y] << 1) | (DIG[AM_D_X] << 0);
+	
+	//E7 THU
+	//E5 AM THANG DV
+	//E3 MIN CHUC
+	//GPIOG->ODR = 0b00000000 | (DIG[DAY] << 7) | (DIG[AM_M_Y] << 5) | (DIG[MIN_X] << 3);
+	
+	//A6 DUONG NGAY CHUC
+	//A5 DUONG NGAY DV
+	//A4 HOUR CHUC
+	//A3 DUONG NAM DV
+	//A2 SECOND
+	//A1 DUONG THANG CHUC
+	//GPIOA->ODR = 0b00000000 | (DIG[DATE_X] << 6) | (DIG[DATE_Y] << 5) | (DIG[HOUR_X] << 4) | (DIG[YEAR_Y] << 3) | (DIG[DOT_SEC] << 2) | (DIG[MONTH_X] << 1);
+	
+	//C7 HOUR DV
+	//C6 AM NGAY DV
+	//C5 DUONG THANG DV
+	//C4 TEMPERATURE CHUC
+	//C3 AM THANG CHUC
+	//C2 TEMPERATURE DV
+	//C1 DUONG NAM CHUC	
+	//GPIOC->ODR = 0b00000000 | (DIG[HOUR_X] << 7) | (DIG[AM_D_Y] << 6) | (DIG[MONTH_Y] << 5) | (DIG[TEMP_X] << 4) | (DIG[AM_M_X] << 3) | (DIG[TEMP_Y] << 2) | (DIG[YEAR_X] << 1);	
+
+	seg++;
+	if(seg > 9)
+	{
+		seg = 1;
+	}
+	TIM4->SR1 &= ~(1 << 0);
+}
+void timer4_init(void) {
+	// CK_PSC (internal fMASTER) is divided by the prescaler value.
+	TIM4->PSCR = 7;
+	TIM4->ARR = 131;
+	// Enable update interrupt for timer 4
+	TIM4->IER |= (1 << 0);
+	// Clear timer interrupt flag
+	TIM4->SR1 &= ~(1 << 0);
+	// Precalculated value
+	//TIM4_CNTR = 0xFF - 126;
+	// Enable timer 4
+	TIM4->CR1 |= (1 << 0);
+	//Enable auto-reload
+	TIM4->CR1 |= (1 << 7);
+	enableInterrupts();
+}
 main()
 {
 	CLK->CKDIVR = 0x00; // Set the frequency to 16 MHz
-	GPIOA->DDR = 0b01101110;//
+	GPIOA->DDR = 0b01111110;//
 	GPIOB->DDR = 0b11111110;//
 	GPIOC->DDR = 0b11111110;//
-	GPIOD->DDR = 0b11111101;//
+	GPIOD->DDR = 0b11111111;//
 	GPIOE->DDR = 0b10101000;//
 	GPIOG->DDR = 0b00000011;//
 	
 	GPIOA->CR1 = 0b01111110;
 	GPIOB->CR1 = 0b11111110;
 	GPIOC->CR1 = 0b11111110;
-	GPIOD->CR1 = 0b11111101;
+	GPIOD->CR1 = 0b11111111;
 	GPIOE->CR1 = 0b11101000;
 	GPIOG->CR1 = 0b00000011;
 							
 	GPIOA->CR2 = 0b01111110;
 	GPIOB->CR2 = 0b11111110;
 	GPIOC->CR2 = 0b11111110;
-	GPIOD->CR2 = 0b11111101;
+	GPIOD->CR2 = 0b11111111;
 	GPIOE->CR2 = 0b11101000;
 	GPIOG->CR2 = 0b00000011;
-	
+	timer4_init();
 	while (1){
-		GPIOA->ODR = 0b00000110;//
-		GPIOB->ODR = led7_b[8];// led data left from second
-		GPIOC->ODR = 0b00000000;//
-		GPIOD->ODR = led7_d[8];// led data right from second
-		GPIOE->ODR = 0b00000000;//
-		GPIOG->ODR = 0b00000000;//
+		//GPIOA->ODR = 0b01000100;//
+		//GPIOB->ODR = led7_b[8];// led data left from second
+		//GPIOC->ODR = 0b00000000;//
+		//GPIOD->ODR = led7_d[8];// led data right from second
+		//GPIOE->ODR = 0b00001000;//
+		//GPIOG->ODR = 0b00000000;//
 	}
 }
