@@ -1,5 +1,5 @@
 [DebugState_v1-Debug.DebugContext]
-DumpRWOnFly1=0
+DumpRWOnFly1=1
 DumpRWOnFly2=0
 DumpRWOnFly3=0
 DumpRWOnFly4=0

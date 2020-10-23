@@ -96,16 +96,29 @@ uint8_t led7_d_1[10] = {0b00010000,0b11011110,0b00101000,0b10001000,0b11000100,0
 
 uint8_t DIG[18] = {0};
 uint8_t seg = 0, value = 99, n = 0;
-uint8_t data[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
+uint8_t data_display[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
+//IR
+uint8_t done = 0, is_repeat = 0;
+int16_t count_ms1 = 0, count_bit_ir = 0, start_status = -1;
+uint32_t code_ir = 0;
+//IR end init
+void delay(uint16_t nCount)
+{
+  /* Decrement nCount value */
+  while (nCount != 0)
+  {
+    nCount--;
+  }
+}
 INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 {
 	switch(seg)
 	{
 		case 1:
 		{
-			GPIOB->ODR  =    led7_b[data[DATE_X]];
+			GPIOB->ODR  =    led7_b[data_display[DATE_X]];
 
-			GPIOD->ODR  =    led7_d[data[MIN_X]];
+			GPIOD->ODR  =    led7_d[data_display[MIN_X]];
 			
 			GPIOA->ODR = 0b01000100;
 			
@@ -117,9 +130,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}					
 		case 2:
 		{
-			GPIOB->ODR  =    led7_b[data[DATE_Y]];
+			GPIOB->ODR  =    led7_b[data_display[DATE_Y]];
 
-			GPIOD->ODR  =    led7_d[data[MIN_Y]];
+			GPIOD->ODR  =    led7_d[data_display[MIN_Y]];
 			
 			GPIOA->ODR = 0b00100100;
 			
@@ -131,9 +144,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}						
 		case 3:
 		{
-			GPIOB->ODR  =    led7_b[data[MONTH_X]];
+			GPIOB->ODR  =    led7_b[data_display[MONTH_X]];
 
-			GPIOD->ODR  =    led7_d_1[data[AM_D_X]];
+			GPIOD->ODR  =    led7_d_1[data_display[AM_D_X]];
 						
 			GPIOA->ODR = 0b00000110;
 			
@@ -145,9 +158,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 4:
 		{
-			GPIOB->ODR  =    led7_b[data[MONTH_Y]];
+			GPIOB->ODR  =    led7_b[data_display[MONTH_Y]];
 
-			GPIOD->ODR  =    led7_d_1[data[AM_D_Y]];
+			GPIOD->ODR  =    led7_d_1[data_display[AM_D_Y]];
 						
 			GPIOA->ODR = 0b00000100;
 			
@@ -159,9 +172,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 5:
 		{
-			GPIOB->ODR  =    led7_b[data[YEAR_X]];
+			GPIOB->ODR  =    led7_b[data_display[YEAR_X]];
 
-			GPIOD->ODR  =    led7_d_1[data[AM_M_X]];			
+			GPIOD->ODR  =    led7_d_1[data_display[AM_M_X]];			
 			GPIOA->ODR = 0b00000100;
 			
 			GPIOC->ODR = 0b00001010;
@@ -172,9 +185,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 6:
 		{
-			GPIOB->ODR  =    led7_b[data[YEAR_Y]];
+			GPIOB->ODR  =    led7_b[data_display[YEAR_Y]];
 
-			GPIOD->ODR  =    led7_d_1[data[AM_M_Y]];			
+			GPIOD->ODR  =    led7_d_1[data_display[AM_M_Y]];			
 						
 			GPIOA->ODR = 0b00001100;
 			
@@ -186,9 +199,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 7:
 		{
-			GPIOB->ODR  =    led7_b[data[HOUR_X]];//data[HOUR_X]
+			GPIOB->ODR  =    led7_b[data_display[HOUR_X]];//data_display[HOUR_X]
 
-			GPIOD->ODR  =    led7_d_1[data[TEMP_X]];			
+			GPIOD->ODR  =    led7_d_1[data_display[TEMP_X]];			
 						
 			GPIOA->ODR = 0b00010100;
 			
@@ -200,9 +213,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 8:
 		{
-			GPIOB->ODR  =    led7_b[data[DAY]];
+			GPIOB->ODR  =    led7_b[data_display[DAY]];
 
-			GPIOD->ODR  =    led7_d[data[HOUR_Y]];	
+			GPIOD->ODR  =    led7_d[data_display[HOUR_Y]];	
 						
 			GPIOA->ODR = 0b00000100;
 			
@@ -214,7 +227,7 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 9:
 		{
-			GPIOD->ODR  =    led7_d_1[data[TEMP_Y]];
+			GPIOD->ODR  =    led7_d_1[data_display[TEMP_Y]];
 						
 			GPIOA->ODR = 0b00000000;
 			
@@ -259,6 +272,109 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 	}
 	TIM4->SR1 &= ~(1 << 0);
 }
+void reset_to_new_cmd(void){
+	count_ms1=0;
+	start_status=-1;
+	count_bit_ir=0;
+	code_ir = 0;
+	done = 0;
+}
+INTERRUPT void TIM2_UPD_OVF_IRQHandler(void){
+	
+	if((start_status == 0) || (done == 1)) reset_to_new_cmd();
+	//mode = 0;
+	//clear trigger
+	//data_display[1] = 0; data_display[2] = 0;
+	TIM2->SR1 = 0b00000000;
+}
+INTERRUPT void EXTI_PORTE_IRQHandler()
+{
+	if((GPIOE->IDR & 0x01) == 0){	
+		switch(start_status){
+			case -1:
+				TIM2->CNTRL = 0;
+				TIM2->CNTRH = 0xFF;
+				start_status = 0;
+				break;
+			case 0:
+				count_ms1 = TIM2->CNTRL;
+				TIM2->CNTRH = 0xFF;
+				if(((count_ms1)>=200)&&((count_ms1)<=230))//10ms-14ms start, repeat 9ms+ 2.25ms = 11.25
+				{
+					count_bit_ir=0;
+					start_status=1;
+					count_ms1=0;
+					TIM2->CNTRL = 0;
+				} else if(count_ms1 <= 180)//10ms-14ms start, repeat 9ms+ 2.25ms = 11.25
+				{
+					/*
+					count_bit_ir=0;
+					start_status=-1;
+					count_ms1=0;
+					done = 1;
+					data = 0xFFFFFFFF;
+					*/
+					TIM2->CNTRL = 0x16;
+					TIM2->CNTRH = 0xF7;	
+					is_repeat++;
+					//value = is_repeat;
+				} else if(count_ms1>226)/// error detect xung start
+				{
+					count_ms1=0;
+					start_status=-1;
+					count_bit_ir=0;
+					is_repeat = 0;
+					code_ir=0;
+				}
+				break;
+			case 1:
+				TIM2->CNTRH = 0xFF;
+				count_ms1 = TIM2->CNTRL;
+				//value = count_ms1;
+				TIM2->CNTRL = 0;
+				if((count_bit_ir>=0)&&(count_bit_ir<=31)){
+					//if(count_bit_ir == 1) 
+					value = count_bit_ir;
+					if((count_ms1>=20)&&(count_ms1<=47))//2ms->3ms //detect logic 1.
+					{
+						code_ir|=(uint32_t)1<<(31-count_bit_ir);
+						count_ms1=0;
+					}
+					else if(count_ms1<20)//nho hon <2ms //detect logic 0.
+					{
+						count_ms1=0;
+					}
+					else //error data reset all
+					{
+						//value = count_bit_ir+500;	
+						count_ms1=0;
+						start_status=-1;
+						count_bit_ir=0;
+						code_ir=0;
+					}
+					count_bit_ir++;	
+					//value =	count_bit_ir;	
+								
+				}
+				
+				if(count_bit_ir == 32) //reset sau khi detect 32 bit data
+				{
+					//value = (data >> 24) & 0xFF;
+					//value = (data >> 16) & 0xFF;
+					//value = (data >> 8) & 0xFF;
+					//value = (data >> 0) & 0xFF;	
+					data_display[15] = ((uint8_t) count_bit_ir) / 10;
+					data_display[16] = ((uint8_t) count_bit_ir)  % 10;	
+					TIM2->CNTRL = 0xCB;
+					TIM2->CNTRH = 0xF3;	
+					is_repeat = 0;
+					done = 1;
+					
+				}
+				break;
+		}
+	}
+}
 void timer4_init(void) {
 	// CK_PSC (internal fMASTER) is divided by the prescaler value.
 	TIM4->PSCR = 7;
@@ -273,11 +389,18 @@ void timer4_init(void) {
 	TIM4->CR1 |= (1 << 0);
 	//Enable auto-reload
 	TIM4->CR1 |= (1 << 7);
-	enableInterrupts();
+}
+void timer2_init(void){
+TIM2->PSCR = 0b00001010;       //  Prescaler = 1.
+//TIM2->ARRH = 0x00;       //  High byte of 8,000.
+//TIM2->ARRL = 0x00;       //  Low byte of 8,000.
+TIM2->IER = 0b00000001;       //  Enable the update interrupts.
+TIM2->CR1 = 0b00000001;       //  Finally enable the timer.
 }
 main()
 {
 	CLK->CKDIVR = 0x00; // Set the frequency to 16 MHz
+	delay(1000);
 	GPIOA->DDR = 0b01111110;//
 	GPIOB->DDR = 0b11111110;//
 	GPIOC->DDR = 0b11111110;//
@@ -296,9 +419,14 @@ main()
 	GPIOB->CR2 = 0b11111110;
 	GPIOC->CR2 = 0b11111110;
 	GPIOD->CR2 = 0b11111111;
-	GPIOE->CR2 = 0b11101000;
+	GPIOE->CR2 = 0b11101001;
 	GPIOG->CR2 = 0b00000011;
 	timer4_init();
+	timer2_init();
+	EXTI->CR2 = 0b00000010;
+	//ITC->ISPR2 = 0b00111111;
+	//ITC->ISPR6 = 0b01111111;
+	enableInterrupts();
 	while (1){
 		//GPIOA->ODR = 0b01000100;//
 		//GPIOB->ODR = led7_b[8];// led data left from second
@@ -306,5 +434,16 @@ main()
 		//GPIOD->ODR = led7_d[8];// led data right from second
 		//GPIOE->ODR = 0b00001000;//
 		//GPIOG->ODR = 0b00000000;//
+		
+		if(done == 1){
+			if(code_ir == 0x40BDA25D){ data_display[10] = 9; reset_to_new_cmd();}
+			/*
+			else if(data == 0xFFFFFFFF){
+					mode = 1; delay(50000); mode = 0; delay(50000);
+					reset_to_new_cmd();
+			}
+			*/
+			else {data_display[10] = 0; reset_to_new_cmd();}
+		}
 	}
 }
