@@ -107,7 +107,8 @@ uint32_t code_ir = 0;
 #define I2C_READ	1
 #define I2C_WRITE	0
 uint8_t reg = 0;
-uint8_t year_disp = 0;
+uint8_t data_disp[10] = {0};
+
 //I2C end init
 void delay(uint16_t nCount)
 {
@@ -283,7 +284,7 @@ void reset_to_new_cmd(void){
 	count_ms1=0;
 	start_status=-1;
 	count_bit_ir=0;
-	code_ir = 0;
+	//code_ir = 0;
 	done = 0;
 }
 INTERRUPT void TIM2_UPD_OVF_IRQHandler(void){
@@ -382,6 +383,11 @@ INTERRUPT void EXTI_PORTE_IRQHandler()
 		}
 	}
 }
+void timer1_init(void){
+	TIM1->PSCRH = 0x3E;
+	TIM1->PSCRL = 0x7F;
+	TIM1->CR1 = 0x01;
+}
 void timer4_init(void) {
 	// CK_PSC (internal fMASTER) is divided by the prescaler value.
 	TIM4->PSCR = 7;
@@ -421,7 +427,85 @@ void i2c_init(void){
 	//  Configuration complete so turn the peripheral on.
 	I2C->CR1 = 0x01;
 }
-void test_i2c(void){
+uint8_t step_treo = 0;
+uint8_t test_i2c(uint8_t offset){
+	uint32_t wdt = 0;
+	//  Enter master mode.
+	I2C->CR2 = 0b00000101;
+	//wait START generate complete
+	step_treo = 0;
+	while (((I2C->CR2) & 0x01) == 0x01);
+	//clear SB bit after START complete
+	step_treo = 1;
+	while(((I2C->SR1) & 0x01) == 0x00);
+	//write data to bus
+	I2C->DR = (0x68 << 1) | I2C_WRITE;
+	//wait ADDR bit is set
+	step_treo = 2;
+	while (((I2C->SR1 >> 1) & 0x01) == 0x00);
+	reg = I2C->SR1;
+	reg = I2C->SR3;
+	reg = I2C->SR3;
+	//end address phase
+	
+	I2C->DR = offset;
+	//wait TXE bit is set
+	step_treo = 3;
+	while (((I2C->SR1 >> 7) & 0x01) == 0x00);
+	
+	//generate STOP
+	I2C->CR2 = 0b00000110;
+	//wait STOP generate complete
+	step_treo = 4;
+	while (((I2C->CR2 >> 1) & 0x01) == 0x01);
+	//generate START
+	I2C->CR2 = 0b00000101;
+	//wait START generate complete
+	step_treo = 5;
+
+	while (((I2C->CR2) & 0x01) == 0x01);
+	//clear SB bit after START complete
+	step_treo = 6;
+
+	while(((I2C->SR1) & 0x01) == 0x00);
+	//write data to bus
+	I2C->DR = (0x68 << 1) | I2C_READ;
+	
+	//wait ADDR bit is set
+	step_treo = 7;
+	while (((I2C->SR1 >> 1) & 0x01) == 0x00);
+	//set NACK after receive one byte
+	I2C->CR2 = 0b00000000;
+	reg = I2C->SR1;
+	reg = I2C->SR3;
+	
+
+	//wait ADDR bit is cleared
+	step_treo = 8;
+	while (((I2C->SR1 >> 1) & 0x01) == 0x01);
+	//set STOP after receive done
+	I2C->CR2 = 0b00000010;
+	reg = I2C->DR;
+	reg = I2C->SR3;
+	step_treo = 9;
+	while (((I2C->CR2 >> 1) & 0x01) == 0x01);
+	step_treo = 0;
+	while (((I2C->SR1 >> 6) & 0x01) == 0x00);
+	reg = I2C->DR;
+	step_treo = 10;
+	return reg;
+}
+uint8_t bcd2dec(uint8_t num)
+{
+	return ((num/16 * 10) + (num % 16));
+}
+uint8_t dec2bcd(uint8_t num)
+{
+	return ((num/10 * 16) + (num % 10));
+}
+//setTime(8, 30, 0, 2, 12, 10, 29);
+void setTime(uint8_t hr, uint8_t min, uint8_t sec, uint8_t wd, uint8_t d, uint8_t mth, uint8_t yr)
+{
 	//  Enter master mode.
 	I2C->CR2 = 0b00000101;
 	//wait START generate complete
@@ -437,63 +521,10 @@ void test_i2c(void){
 	reg = I2C->SR3;
 	//end address phase
 	
-	I2C->DR = 0x06;
+	//set pointer to 0
+	I2C->DR = 0x00;
 	//wait TXE bit is set
 	while (((I2C->SR1 >> 7) & 0x01) == 0x00);
-	
-	//generate STOP
-	I2C->CR2 = 0b00000110;
-	while (((I2C->CR2 >> 1) & 0x01) == 0x01);
-	
-	I2C->CR2 = 0b00000101;
-	//wait START generate complete
-	while (((I2C->CR2) & 0x01) == 0x01);
-	//clear SB bit after START complete
-	while(((I2C->SR1) & 0x01) == 0x00);
-	//write data to bus
-	I2C->DR = (0x68 << 1) | I2C_READ;
-	
-	//wait ADDR bit is set
-	while (((I2C->SR1 >> 1) & 0x01) == 0x00);
-	//set NACK after receive one byte
-	I2C->CR2 = 0b00000000;
-	reg = I2C->SR1;
-	reg = I2C->SR3;
-	
-
-	//wait ADDR bit is cleared
-	while (((I2C->SR1 >> 1) & 0x01) == 0x01);
-	//set STOP after receive done
-	I2C->CR2 = 0b00000010;
-	year_disp = I2C->DR;
-	reg = I2C->SR3;
-	while (((I2C->CR2 >> 1) & 0x01) == 0x01);
-	
-}
-uint8_t bcd2dec(uint8_t num)
-{
-	return ((num/16 * 10) + (num % 16));
-}
-uint8_t dec2bcd(uint8_t num)
-{
-	return ((num/10 * 16) + (num % 10));
-}
-void setTime(uint8_t hr, uint8_t min, uint8_t sec, uint8_t wd, uint8_t d, uint8_t mth, uint8_t yr)
-{
-	//  Enter master mode.
-	I2C->CR2 = 0b00000101;
-	//wait START generate complete
-	while (((I2C->CR2) & 0x01) == 0x01);
-	//clear SB bit after START complete
-	while(((I2C->SR1) & 0x01) == 0x00);
-	//write data to bus
-	I2C->DR = (0x68 << 1) | 0;
-	//wait ADDR bit is set
-	while (((I2C->SR1 >> 1) & 0x01) == 0x00);
-	reg = I2C->SR1;
-	reg = I2C->SR3;
-	reg = I2C->SR3;
-	//end address phase
 	
 	I2C->DR = dec2bcd(sec);
 	//wait TXE bit is set
@@ -523,17 +554,15 @@ void setTime(uint8_t hr, uint8_t min, uint8_t sec, uint8_t wd, uint8_t d, uint8_
 	//wait TXE bit is set
 	while (((I2C->SR1 >> 7) & 0x01) == 0x00);
 	
-	I2C->DR = dec2bcd(yr);
-	//wait TXE bit is set
-	while (((I2C->SR1 >> 7) & 0x01) == 0x00);
-
 	//generate STOP and wait
 	I2C->CR2 = 0b00000110;
 	while (((I2C->CR2 >> 1) & 0x01) == 0x01);
 	
 }
+uint16_t timer1_value = 0, timer_second = 0;
 main()
 {
+	
 	CLK->CKDIVR = 0x00; // Set the frequency to 16 MHz
 	delay(1000);
 	GPIOA->DDR = 0b01111110;//
@@ -556,6 +585,7 @@ main()
 	GPIOD->CR2 = 0b11111111;
 	GPIOE->CR2 = 0b11101001;
 	GPIOG->CR2 = 0b00000011;
+	timer1_init();
 	timer4_init();
 	timer2_init();
 	i2c_init();
@@ -563,15 +593,24 @@ main()
 	//ITC->ISPR2 = 0b00111111;
 	//ITC->ISPR6 = 0b01111111;
 	enableInterrupts();
-	//setTime(19, 30, 0, 2, 12, 10, 29);
-	test_i2c();
+	//setTime(16, 57, 00, 2, 26, 10, 20);
+	test_i2c(0x00);
 	while (1){
+		timer1_value = TIM2->CNTRH*256 + TIM2->CNTRL;
 		//GPIOA->ODR = 0b01000100;//
 		//GPIOB->ODR = led7_b[8];// led data left from second
 		//GPIOC->ODR = 0b00000000;//
 		//GPIOD->ODR = led7_d[8];// led data right from second
 		//GPIOE->ODR = 0b00001000;//
 		//GPIOG->ODR = 0b00000000;//
+		if(timer1_value - timer_second > 1000){
+			timer_second = timer1_value;
+			data_disp[0] = test_i2c(0x00);
+			//data_disp[1] = test_i2c(0x01);
+			//data_disp[2] = test_i2c(0x02);
+			//data_disp[3] = test_i2c(0x03);
+		}
+
 		
 		if(done == 1){
 			if(code_ir == 0x40BDA25D){ data_display[10] = 9; reset_to_new_cmd();}
