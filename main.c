@@ -96,7 +96,7 @@ uint8_t led7_d_1[10] = {0b00010000,0b11011110,0b00101000,0b10001000,0b11000100,0
 
 uint8_t DIG[18] = {0};
 uint8_t seg = 0, value = 99, n = 0;
-uint8_t data_display[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
+uint8_t data_timelay[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
 //IR
 uint8_t done = 0, is_repeat = 0;
 int16_t count_ms1 = 0, count_bit_ir = 0, start_status = -1;
@@ -107,7 +107,7 @@ uint32_t code_ir = 0;
 #define I2C_READ	1
 #define I2C_WRITE	0
 uint8_t reg = 0;
-uint8_t data_disp[10] = {0};
+uint8_t data_time[10] = {0};
 
 //I2C end init
 void delay(uint16_t nCount)
@@ -124,9 +124,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 	{
 		case 1:
 		{
-			GPIOB->ODR  =    led7_b[data_display[DATE_X]];
+			GPIOB->ODR  =    led7_b[data_timelay[DATE_X]];
 
-			GPIOD->ODR  =    led7_d[data_display[MIN_X]];
+			GPIOD->ODR  =    led7_d[data_timelay[MIN_X]];
 			
 			GPIOA->ODR = 0b01000100;
 			
@@ -138,9 +138,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}					
 		case 2:
 		{
-			GPIOB->ODR  =    led7_b[data_display[DATE_Y]];
+			GPIOB->ODR  =    led7_b[data_timelay[DATE_Y]];
 
-			GPIOD->ODR  =    led7_d[data_display[MIN_Y]];
+			GPIOD->ODR  =    led7_d[data_timelay[MIN_Y]];
 			
 			GPIOA->ODR = 0b00100100;
 			
@@ -152,9 +152,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}						
 		case 3:
 		{
-			GPIOB->ODR  =    led7_b[data_display[MONTH_X]];
+			GPIOB->ODR  =    led7_b[data_timelay[MONTH_X]];
 
-			GPIOD->ODR  =    led7_d_1[data_display[AM_D_X]];
+			GPIOD->ODR  =    led7_d_1[data_timelay[AM_D_X]];
 						
 			GPIOA->ODR = 0b00000110;
 			
@@ -166,9 +166,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 4:
 		{
-			GPIOB->ODR  =    led7_b[data_display[MONTH_Y]];
+			GPIOB->ODR  =    led7_b[data_timelay[MONTH_Y]];
 
-			GPIOD->ODR  =    led7_d_1[data_display[AM_D_Y]];
+			GPIOD->ODR  =    led7_d_1[data_timelay[AM_D_Y]];
 						
 			GPIOA->ODR = 0b00000100;
 			
@@ -180,9 +180,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 5:
 		{
-			GPIOB->ODR  =    led7_b[data_display[YEAR_X]];
+			GPIOB->ODR  =    led7_b[data_timelay[YEAR_X]];
 
-			GPIOD->ODR  =    led7_d_1[data_display[AM_M_X]];			
+			GPIOD->ODR  =    led7_d_1[data_timelay[AM_M_X]];			
 			GPIOA->ODR = 0b00000100;
 			
 			GPIOC->ODR = 0b00001010;
@@ -193,9 +193,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 6:
 		{
-			GPIOB->ODR  =    led7_b[data_display[YEAR_Y]];
+			GPIOB->ODR  =    led7_b[data_timelay[YEAR_Y]];
 
-			GPIOD->ODR  =    led7_d_1[data_display[AM_M_Y]];			
+			GPIOD->ODR  =    led7_d_1[data_timelay[AM_M_Y]];			
 						
 			GPIOA->ODR = 0b00001100;
 			
@@ -207,9 +207,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 7:
 		{
-			GPIOB->ODR  =    led7_b[data_display[HOUR_X]];//data_display[HOUR_X]
+			GPIOB->ODR  =    led7_b[data_timelay[HOUR_X]];//data_timelay[HOUR_X]
 
-			GPIOD->ODR  =    led7_d_1[data_display[TEMP_X]];			
+			GPIOD->ODR  =    led7_d_1[data_timelay[TEMP_X]];			
 						
 			GPIOA->ODR = 0b00010100;
 			
@@ -221,9 +221,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 8:
 		{
-			GPIOB->ODR  =    led7_b[data_display[DAY]];
+			GPIOB->ODR  =    led7_b[data_timelay[DAY]];
 
-			GPIOD->ODR  =    led7_d[data_display[HOUR_Y]];	
+			GPIOD->ODR  =    led7_d[data_timelay[HOUR_Y]];	
 						
 			GPIOA->ODR = 0b00000100;
 			
@@ -235,7 +235,7 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		}
 		case 9:
 		{
-			GPIOD->ODR  =    led7_d_1[data_display[TEMP_Y]];
+			GPIOD->ODR  =    led7_d_1[data_timelay[TEMP_Y]];
 						
 			GPIOA->ODR = 0b00000000;
 			
@@ -284,7 +284,7 @@ void reset_to_new_cmd(void){
 	count_ms1=0;
 	start_status=-1;
 	count_bit_ir=0;
-	//code_ir = 0;
+	code_ir = 0;
 	done = 0;
 }
 INTERRUPT void TIM2_UPD_OVF_IRQHandler(void){
@@ -292,7 +292,7 @@ INTERRUPT void TIM2_UPD_OVF_IRQHandler(void){
 	if((start_status == 0) || (done == 1)) reset_to_new_cmd();
 	//mode = 0;
 	//clear trigger
-	//data_display[1] = 0; data_display[2] = 0;
+	//data_timelay[1] = 0; data_timelay[2] = 0;
 	TIM2->SR1 = 0b00000000;
 }
 INTERRUPT void EXTI_PORTE_IRQHandler()
@@ -371,8 +371,8 @@ INTERRUPT void EXTI_PORTE_IRQHandler()
 					//value = (data >> 16) & 0xFF;
 					//value = (data >> 8) & 0xFF;
 					//value = (data >> 0) & 0xFF;	
-					data_display[15] = ((uint8_t) count_bit_ir) / 10;
-					data_display[16] = ((uint8_t) count_bit_ir)  % 10;	
+					data_timelay[15] = ((uint8_t) count_bit_ir) / 10;
+					data_timelay[16] = ((uint8_t) count_bit_ir)  % 10;	
 					TIM2->CNTRL = 0xCB;
 					TIM2->CNTRH = 0xF3;	
 					is_repeat = 0;
@@ -384,14 +384,15 @@ INTERRUPT void EXTI_PORTE_IRQHandler()
 	}
 }
 void timer1_init(void){
-	TIM1->PSCRH = 0x3E;
-	TIM1->PSCRL = 0x7F;
+	TIM1->CR1 = 0x00;
+	TIM1->PSCRH = 0x3E; //3E
+	TIM1->PSCRL = 0x7F; //7F
 	TIM1->CR1 = 0x01;
 }
 void timer4_init(void) {
 	// CK_PSC (internal fMASTER) is divided by the prescaler value.
 	TIM4->PSCR = 7;
-	TIM4->ARR = 131;
+	TIM4->ARR = 200;
 	// Enable update interrupt for timer 4
 	TIM4->IER |= (1 << 0);
 	// Clear timer interrupt flag
@@ -489,10 +490,9 @@ uint8_t test_i2c(uint8_t offset){
 	reg = I2C->SR3;
 	step_treo = 9;
 	while (((I2C->CR2 >> 1) & 0x01) == 0x01);
-	step_treo = 0;
-	while (((I2C->SR1 >> 6) & 0x01) == 0x00);
-	reg = I2C->DR;
 	step_treo = 10;
+	//while (((I2C->SR1 >> 6) & 0x01) == 0x00);
+	reg = I2C->DR;
 	return reg;
 }
 uint8_t bcd2dec(uint8_t num)
@@ -559,7 +559,9 @@ void setTime(uint8_t hr, uint8_t min, uint8_t sec, uint8_t wd, uint8_t d, uint8_
 	while (((I2C->CR2 >> 1) & 0x01) == 0x01);
 	
 }
-uint16_t timer1_value = 0, timer_second = 0;
+uint16_t timer1_value = 0, timer_second = 1000;
+uint8_t hihi = 0;
+uint16_t a = 5, b = 65530, c = 0;
 main()
 {
 	
@@ -594,9 +596,10 @@ main()
 	//ITC->ISPR6 = 0b01111111;
 	enableInterrupts();
 	//setTime(16, 57, 00, 2, 26, 10, 20);
-	test_i2c(0x00);
+	//test_i2c(0x00);
 	while (1){
-		timer1_value = TIM2->CNTRH*256 + TIM2->CNTRL;
+		timer1_value = TIM1->CNTRH<<8;
+		timer1_value |= TIM1->CNTRL;
 		//GPIOA->ODR = 0b01000100;//
 		//GPIOB->ODR = led7_b[8];// led data left from second
 		//GPIOC->ODR = 0b00000000;//
@@ -605,22 +608,25 @@ main()
 		//GPIOG->ODR = 0b00000000;//
 		if(timer1_value - timer_second > 1000){
 			timer_second = timer1_value;
-			data_disp[0] = test_i2c(0x00);
-			//data_disp[1] = test_i2c(0x01);
-			//data_disp[2] = test_i2c(0x02);
-			//data_disp[3] = test_i2c(0x03);
+			data_time[0] = test_i2c(0x00);
+			data_time[1] = test_i2c(0x01);
+			data_time[2] = test_i2c(0x02);
+			//data_time[3] = test_i2c(0x03);
+			//data_time[4] = test_i2c(0x04);
+			//data_time[5] = test_i2c(0x05);
+			//data_time[6] = test_i2c(0x06);
 		}
 
 		
 		if(done == 1){
-			if(code_ir == 0x40BDA25D){ data_display[10] = 9; reset_to_new_cmd();}
+			if(code_ir == 0x40BDA25D){ data_timelay[10] = 9; reset_to_new_cmd();}
 			/*
 			else if(data == 0xFFFFFFFF){
 					mode = 1; delay(50000); mode = 0; delay(50000);
 					reset_to_new_cmd();
 			}
 			*/
-			else {data_display[10] = 0; reset_to_new_cmd();}
+			else {data_timelay[10] = 0; reset_to_new_cmd();}
 		}
 	}
 }

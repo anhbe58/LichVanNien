@@ -737,6 +737,7 @@ TIM1_TypeDef;
 #define TIM1_EGR_CC4G    ((uint8_t)0x10) /*!< Capture/Compare 4 Generation mask. */
 #define TIM1_EGR_CC3G    ((uint8_t)0x08) /*!< Capture/Compare 3 Generation mask. */
 #define TIM1_EGR_CC2G    ((uint8_t)0x04) /*!< Capture/Compare 2 Generation mask. */
+#define TIM1_EGR_CC2G    ((uint8_t)0x04) /*!< Capture/Compare 2 Generation mask. */
 #define TIM1_EGR_CC1G    ((uint8_t)0x02) /*!< Capture/Compare 1 Generation mask. */
 #define TIM1_EGR_UG      ((uint8_t)0x01) /*!< Update Generation mask. */
 /*CCMR*/
