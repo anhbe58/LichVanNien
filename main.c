@@ -95,8 +95,9 @@ uint8_t led7_d_1[10] = {0b00010000,0b11011110,0b00101000,0b10001000,0b11000100,0
 //C1 DUONG NAM CHUC	
 
 uint8_t DIG[18] = {0};
-uint8_t seg = 0, value = 99, n = 0;
-uint8_t data_timelay[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
+uint8_t seg = 1, value = 99, n = 0, test_data = 0;
+uint8_t data_time_display[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
+uint8_t data_time_on_pairs[9] = {20, 20, 20, 20, 20, 20, 20, 20, 20};
 //IR
 uint8_t done = 0, is_repeat = 0;
 int16_t count_ms1 = 0, count_bit_ir = 0, start_status = -1;
@@ -124,9 +125,10 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 	{
 		case 1:
 		{
-			GPIOB->ODR  =    led7_b[data_timelay[DATE_X]];
+			TIM4->ARR  = data_time_on_pairs[0];
+			GPIOB->ODR  =    led7_b[data_time_display[DATE_X]];
 
-			GPIOD->ODR  =    led7_d[data_timelay[MIN_X]];
+			GPIOD->ODR  =    led7_d[data_time_display[MIN_X]];
 			
 			GPIOA->ODR = 0b01000100;
 			
@@ -136,11 +138,12 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOG->ODR = 0b00000000;
 			break;
 		}					
-		case 2:
+		case 3:
 		{
-			GPIOB->ODR  =    led7_b[data_timelay[DATE_Y]];
+			TIM4->ARR  = data_time_on_pairs[1];
+			GPIOB->ODR  =    led7_b[data_time_display[DATE_Y]];
 
-			GPIOD->ODR  =    led7_d[data_timelay[MIN_Y]];
+			GPIOD->ODR  =    led7_d[data_time_display[MIN_Y]];
 			
 			GPIOA->ODR = 0b00100100;
 			
@@ -150,11 +153,12 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOG->ODR = 0b00000010;
 			break;
 		}						
-		case 3:
+		case 5:
 		{
-			GPIOB->ODR  =    led7_b[data_timelay[MONTH_X]];
+			TIM4->ARR  = data_time_on_pairs[2];
+			GPIOB->ODR  =    led7_b[data_time_display[MONTH_X]];
 
-			GPIOD->ODR  =    led7_d_1[data_timelay[AM_D_X]];
+			GPIOD->ODR  =    led7_d_1[data_time_display[AM_D_X]];
 						
 			GPIOA->ODR = 0b00000110;
 			
@@ -164,11 +168,12 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOG->ODR = 0b00000001;
 			break;
 		}
-		case 4:
+		case 7:
 		{
-			GPIOB->ODR  =    led7_b[data_timelay[MONTH_Y]];
+			TIM4->ARR  = data_time_on_pairs[3];
+			GPIOB->ODR  =    led7_b[data_time_display[MONTH_Y]];
 
-			GPIOD->ODR  =    led7_d_1[data_timelay[AM_D_Y]];
+			GPIOD->ODR  =    led7_d_1[data_time_display[AM_D_Y]];
 						
 			GPIOA->ODR = 0b00000100;
 			
@@ -178,11 +183,12 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOG->ODR = 0b00000000;
 			break;
 		}
-		case 5:
+		case 9:
 		{
-			GPIOB->ODR  =    led7_b[data_timelay[YEAR_X]];
+			TIM4->ARR  = data_time_on_pairs[4];
+			GPIOB->ODR  =    led7_b[data_time_display[YEAR_X]];
 
-			GPIOD->ODR  =    led7_d_1[data_timelay[AM_M_X]];			
+			GPIOD->ODR  =    led7_d_1[data_time_display[AM_M_X]];			
 			GPIOA->ODR = 0b00000100;
 			
 			GPIOC->ODR = 0b00001010;
@@ -191,11 +197,12 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOG->ODR = 0b00000000;
 			break;
 		}
-		case 6:
+		case 11:
 		{
-			GPIOB->ODR  =    led7_b[data_timelay[YEAR_Y]];
+			TIM4->ARR  = data_time_on_pairs[5];
+			GPIOB->ODR  =    led7_b[data_time_display[YEAR_Y]];
 
-			GPIOD->ODR  =    led7_d_1[data_timelay[AM_M_Y]];			
+			GPIOD->ODR  =    led7_d_1[data_time_display[AM_M_Y]];			
 						
 			GPIOA->ODR = 0b00001100;
 			
@@ -205,11 +212,12 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOG->ODR = 0b00000000;
 			break;
 		}
-		case 7:
+		case 13:
 		{
-			GPIOB->ODR  =    led7_b[data_timelay[HOUR_X]];//data_timelay[HOUR_X]
+			TIM4->ARR  = data_time_on_pairs[6];
+			GPIOB->ODR  = led7_b[data_time_display[HOUR_X]];//data_time_display[HOUR_X]
 
-			GPIOD->ODR  =    led7_d_1[data_timelay[TEMP_X]];			
+			GPIOD->ODR  = led7_d_1[data_time_display[TEMP_X]];			
 						
 			GPIOA->ODR = 0b00010100;
 			
@@ -219,11 +227,12 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOG->ODR = 0b00000000;
 			break;
 		}
-		case 8:
+		case 15:
 		{
-			GPIOB->ODR  =    led7_b[data_timelay[DAY]];
+			TIM4->ARR  = data_time_on_pairs[7];
+			GPIOB->ODR  = led7_b[data_time_display[DAY]];
 
-			GPIOD->ODR  =    led7_d[data_timelay[HOUR_Y]];	
+			GPIOD->ODR  = led7_d[data_time_display[HOUR_Y]];	
 						
 			GPIOA->ODR = 0b00000100;
 			
@@ -233,13 +242,35 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOG->ODR = 0b00000000;
 			break;
 		}
-		case 9:
+		case 17:
 		{
-			GPIOD->ODR  =    led7_d_1[data_timelay[TEMP_Y]];
+			TIM4->ARR  = data_time_on_pairs[8];
+			GPIOD->ODR  = led7_d_1[data_time_display[TEMP_Y]];
 						
-			GPIOA->ODR = 0b00000000;
+			GPIOA->ODR = 0b00000000 | (DIG[DOT_SEC] << 2);
 			
 			GPIOC->ODR = 0b00000100;
+		
+			GPIOE->ODR = 0b00000000;
+			GPIOG->ODR = 0b00000000;
+			break;
+		}
+		case 2: // 0
+		case 4: // 1
+		case 6: // 2
+		case 8: //3
+		case 10: //4
+		case 12: //5
+		case 14: //6
+		case 16: //7
+		case 18: //8
+		{
+			GPIOB->ODR = 0x00;
+			GPIOD->ODR = 0x00;
+			TIM4->ARR  = 255 - data_time_on_pairs[(seg/2) - 1];
+			GPIOA->ODR = 0b00000100;
+			
+			GPIOC->ODR = 0b00000000;
 		
 			GPIOE->ODR = 0b00000000;
 			GPIOG->ODR = 0b00000000;
@@ -274,7 +305,7 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 	//GPIOC->ODR = 0b00000000 | (DIG[HOUR_X] << 7) | (DIG[AM_D_Y] << 6) | (DIG[MONTH_Y] << 5) | (DIG[TEMP_X] << 4) | (DIG[AM_M_X] << 3) | (DIG[TEMP_Y] << 2) | (DIG[YEAR_X] << 1);	
 
 	seg++;
-	if(seg > 9)
+	if(seg > 19)
 	{
 		seg = 1;
 	}
@@ -292,7 +323,7 @@ INTERRUPT void TIM2_UPD_OVF_IRQHandler(void){
 	if((start_status == 0) || (done == 1)) reset_to_new_cmd();
 	//mode = 0;
 	//clear trigger
-	//data_timelay[1] = 0; data_timelay[2] = 0;
+	//data_time_display[1] = 0; data_time_display[2] = 0;
 	TIM2->SR1 = 0b00000000;
 }
 INTERRUPT void EXTI_PORTE_IRQHandler()
@@ -371,8 +402,8 @@ INTERRUPT void EXTI_PORTE_IRQHandler()
 					//value = (data >> 16) & 0xFF;
 					//value = (data >> 8) & 0xFF;
 					//value = (data >> 0) & 0xFF;	
-					data_timelay[15] = ((uint8_t) count_bit_ir) / 10;
-					data_timelay[16] = ((uint8_t) count_bit_ir)  % 10;	
+					data_time_display[15] = ((uint8_t) count_bit_ir) / 10;
+					data_time_display[16] = ((uint8_t) count_bit_ir)  % 10;	
 					TIM2->CNTRL = 0xCB;
 					TIM2->CNTRH = 0xF3;	
 					is_repeat = 0;
@@ -402,7 +433,7 @@ void timer4_init(void) {
 	// Enable timer 4
 	TIM4->CR1 |= (1 << 0);
 	//Enable auto-reload
-	TIM4->CR1 |= (1 << 7);
+	TIM4->CR1 |= (0 << 7);
 }
 void timer2_init(void){
 TIM2->PSCR = 0b00001010;       //  Prescaler = 1.
@@ -595,7 +626,7 @@ main()
 	//ITC->ISPR2 = 0b00111111;
 	//ITC->ISPR6 = 0b01111111;
 	enableInterrupts();
-	//setTime(16, 57, 00, 2, 26, 10, 20);
+	//setTime(13, 35, 00, 4, 28, 10, 20);
 	//test_i2c(0x00);
 	while (1){
 		timer1_value = TIM1->CNTRH<<8;
@@ -606,27 +637,36 @@ main()
 		//GPIOD->ODR = led7_d[8];// led data right from second
 		//GPIOE->ODR = 0b00001000;//
 		//GPIOG->ODR = 0b00000000;//
-		if(timer1_value - timer_second > 1000){
+		if(timer1_value - timer_second > 500){
 			timer_second = timer1_value;
+			if(DIG[DOT_SEC] == 0) DIG[DOT_SEC] = 1;
+				else DIG[DOT_SEC] = 0;
+				//HOUR_X - 1
 			data_time[0] = test_i2c(0x00);
 			data_time[1] = test_i2c(0x01);
 			data_time[2] = test_i2c(0x02);
 			//data_time[3] = test_i2c(0x03);
-			//data_time[4] = test_i2c(0x04);
-			//data_time[5] = test_i2c(0x05);
+			//data_time[HOUR_X -1] = test_i2c(0x04);
+			//data_time[HOUR_X -1] = test_i2c(0x05);
 			//data_time[6] = test_i2c(0x06);
+			
+			data_time_display[HOUR_X] = bcd2dec(data_time[2]) / 10;
+			data_time_display[HOUR_Y] = bcd2dec(data_time[2]) % 10;
+			data_time_display[MIN_X] = bcd2dec(data_time[1]) / 10;
+			data_time_display[MIN_Y] = bcd2dec(data_time[1]) % 10;
+			
 		}
 
 		
 		if(done == 1){
-			if(code_ir == 0x40BDA25D){ data_timelay[10] = 9; reset_to_new_cmd();}
+			if(code_ir == 0x40BDA25D){ data_time_display[10] = 9; reset_to_new_cmd();}
 			/*
 			else if(data == 0xFFFFFFFF){
 					mode = 1; delay(50000); mode = 0; delay(50000);
 					reset_to_new_cmd();
 			}
 			*/
-			else {data_timelay[10] = 0; reset_to_new_cmd();}
+			else {data_time_display[10] = 0; reset_to_new_cmd();}
 		}
 	}
 }
