@@ -3,6 +3,7 @@
  * Copyright (c) 2002-2005 STMicroelectronics
  */
 #include "stm8s.h"
+#include "lunar_data.h"
 
 //E B7
 //C B5
@@ -95,20 +96,26 @@ uint8_t led7_d_1[10] = {0b00010000,0b11011110,0b00101000,0b10001000,0b11000100,0
 //C1 DUONG NAM CHUC	
 
 uint8_t DIG[18] = {0};
-uint8_t seg = 1, value = 99, n = 0, test_data = 0;
+uint8_t seg = 1, value = 99, temp_ir = 0;
 uint8_t data_time_display[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
-uint8_t data_time_on_pairs[9] = {20, 20, 20, 20, 20, 20, 20, 20, 20};
+uint8_t data_time_on_pairs[9] = {150, 150, 150, 150, 150, 150, 150, 150, 20};
+uint8_t mode_value = 0;
 //IR
 uint8_t done = 0, is_repeat = 0;
 int16_t count_ms1 = 0, count_bit_ir = 0, start_status = -1;
 uint32_t code_ir = 0;
+#define EDIT_MODE 0x40BDA25D //increase value
+#define KEY_INC 0x40BDBB44 //increase value
+#define KEY_DEC 0x40BD31CE //decrease value
+#define KEY_PAGE_RIGHT 0x40BD59A6 //Page right
+#define KEY_PAGE_LEFT 0x40BDB34C //page left
 //IR end init
 
 //I2C
 #define I2C_READ	1
 #define I2C_WRITE	0
 uint8_t reg = 0;
-uint8_t data_time[10] = {0};
+uint8_t data_time[9] = {1};
 
 //I2C end init
 void delay(uint16_t nCount)
@@ -130,11 +137,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 
 			GPIOD->ODR  =    led7_d[data_time_display[MIN_X]];
 			
-			GPIOA->ODR = 0b01000100;
-			
+			GPIOA->ODR = 0b01000100 & (~(DIG[DATE_X] << 6));
 			GPIOC->ODR = 0b00000000;
-		
-			GPIOE->ODR = 0b00001000;
+			GPIOE->ODR = 0b00001000 & (~(DIG[MIN_X] << 3));
 			GPIOG->ODR = 0b00000000;
 			break;
 		}					
@@ -145,12 +150,10 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 
 			GPIOD->ODR  =    led7_d[data_time_display[MIN_Y]];
 			
-			GPIOA->ODR = 0b00100100;
-			
-			GPIOC->ODR = 0b00000000;
-		
+			GPIOA->ODR = 0b00100100 & (~(DIG[DATE_Y] << 5));
+			GPIOC->ODR = 0b00000000;		
 			GPIOE->ODR = 0b00000000;
-			GPIOG->ODR = 0b00000010;
+			GPIOG->ODR = 0b00000010 & (~(DIG[MIN_Y] << 1));
 			break;
 		}						
 		case 5:
@@ -160,12 +163,10 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 
 			GPIOD->ODR  =    led7_d_1[data_time_display[AM_D_X]];
 						
-			GPIOA->ODR = 0b00000110;
-			
-			GPIOC->ODR = 0b00000000;
-		
+			GPIOA->ODR = 0b00000110 & (~(DIG[MONTH_X] << 1));
+			GPIOC->ODR = 0b00000000;	
 			GPIOE->ODR = 0b00000000;
-			GPIOG->ODR = 0b00000001;
+			GPIOG->ODR = 0b00000001 & (~(DIG[AM_D_X] << 0));
 			break;
 		}
 		case 7:
@@ -176,9 +177,7 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOD->ODR  =    led7_d_1[data_time_display[AM_D_Y]];
 						
 			GPIOA->ODR = 0b00000100;
-			
-			GPIOC->ODR = 0b01100000;
-		
+			GPIOC->ODR = 0b01100000& (~(DIG[MONTH_Y] << 5)) & (~(DIG[AM_D_Y] << 6));
 			GPIOE->ODR = 0b00000000;
 			GPIOG->ODR = 0b00000000;
 			break;
@@ -188,11 +187,10 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			TIM4->ARR  = data_time_on_pairs[4];
 			GPIOB->ODR  =    led7_b[data_time_display[YEAR_X]];
 
-			GPIOD->ODR  =    led7_d_1[data_time_display[AM_M_X]];			
-			GPIOA->ODR = 0b00000100;
+			GPIOD->ODR  =    led7_d_1[data_time_display[AM_M_X]];		
 			
-			GPIOC->ODR = 0b00001010;
-		
+			GPIOA->ODR = 0b00000100;
+			GPIOC->ODR = 0b00001010 & (~(DIG[YEAR_X] << 1)) & (~(DIG[AM_M_X] << 3));
 			GPIOE->ODR = 0b00000000;
 			GPIOG->ODR = 0b00000000;
 			break;
@@ -204,11 +202,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 
 			GPIOD->ODR  =    led7_d_1[data_time_display[AM_M_Y]];			
 						
-			GPIOA->ODR = 0b00001100;
-			
+			GPIOA->ODR = 0b00001100 & (~(DIG[YEAR_Y] << 3));
 			GPIOC->ODR = 0b00000000;
-		
-			GPIOE->ODR = 0b00100000;
+			GPIOE->ODR = 0b00100000 & (~(DIG[AM_M_Y] << 5));
 			GPIOG->ODR = 0b00000000;
 			break;
 		}
@@ -219,10 +215,8 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 
 			GPIOD->ODR  = led7_d_1[data_time_display[TEMP_X]];			
 						
-			GPIOA->ODR = 0b00010100;
-			
-			GPIOC->ODR = 0b00010000;
-		
+			GPIOA->ODR = 0b00010100 & (~(DIG[HOUR_X] << 4));
+			GPIOC->ODR = 0b00010000 & (~(DIG[TEMP_X] << 4));
 			GPIOE->ODR = 0b00000000;
 			GPIOG->ODR = 0b00000000;
 			break;
@@ -235,10 +229,8 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOD->ODR  = led7_d[data_time_display[HOUR_Y]];	
 						
 			GPIOA->ODR = 0b00000100;
-			
-			GPIOC->ODR = 0b10000000;
-		
-			GPIOE->ODR = 0b10000000;
+			GPIOC->ODR = 0b10000000 & (~(DIG[HOUR_Y] << 7));
+			GPIOE->ODR = 0b10000000 & (~(DIG[DAY] << 7));
 			GPIOG->ODR = 0b00000000;
 			break;
 		}
@@ -247,10 +239,8 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			TIM4->ARR  = data_time_on_pairs[8];
 			GPIOD->ODR  = led7_d_1[data_time_display[TEMP_Y]];
 						
-			GPIOA->ODR = 0b00000000 | (DIG[DOT_SEC] << 2);
-			
-			GPIOC->ODR = 0b00000100;
-		
+			GPIOA->ODR = 0b00000100 & (~(DIG[DOT_SEC] << 2));			
+			GPIOC->ODR = 0b00000100 & (~(DIG[TEMP_Y] << 2));
 			GPIOE->ODR = 0b00000000;
 			GPIOG->ODR = 0b00000000;
 			break;
@@ -320,10 +310,14 @@ void reset_to_new_cmd(void){
 }
 INTERRUPT void TIM2_UPD_OVF_IRQHandler(void){
 	
-	if((start_status == 0) || (done == 1)) reset_to_new_cmd();
+	if((start_status == 0) || (done == 1) || (start_status == 1)) {
+		reset_to_new_cmd();
+		is_repeat = 0;
+	}
 	//mode = 0;
 	//clear trigger
 	//data_time_display[1] = 0; data_time_display[2] = 0;
+	//15625/s
 	TIM2->SR1 = 0b00000000;
 }
 INTERRUPT void EXTI_PORTE_IRQHandler()
@@ -344,7 +338,7 @@ INTERRUPT void EXTI_PORTE_IRQHandler()
 					start_status=1;
 					count_ms1=0;
 					TIM2->CNTRL = 0;
-				} else if(count_ms1 <= 180)//10ms-14ms start, repeat 9ms+ 2.25ms = 11.25
+				} else if(count_ms1 <= 180)//repeat 9ms+ 2.25ms = 11.25
 				{
 					/*
 					count_bit_ir=0;
@@ -353,8 +347,9 @@ INTERRUPT void EXTI_PORTE_IRQHandler()
 					done = 1;
 					data = 0xFFFFFFFF;
 					*/
-					TIM2->CNTRL = 0x16;
-					TIM2->CNTRH = 0xF7;	
+					//define repeate cycle timeout 240ms count 3750
+					TIM2->CNTRH = 0xF1;
+					TIM2->CNTRL = 0x59;
 					is_repeat++;
 					//value = is_repeat;
 				} else if(count_ms1>226)/// error detect xung start
@@ -386,6 +381,7 @@ INTERRUPT void EXTI_PORTE_IRQHandler()
 					else //error data reset all
 					{
 						//value = count_bit_ir+500;	
+						is_repeat = 0;
 						count_ms1=0;
 						start_status=-1;
 						count_bit_ir=0;
@@ -402,8 +398,7 @@ INTERRUPT void EXTI_PORTE_IRQHandler()
 					//value = (data >> 16) & 0xFF;
 					//value = (data >> 8) & 0xFF;
 					//value = (data >> 0) & 0xFF;	
-					data_time_display[15] = ((uint8_t) count_bit_ir) / 10;
-					data_time_display[16] = ((uint8_t) count_bit_ir)  % 10;	
+					//temp_ir = count_bit_ir;
 					TIM2->CNTRL = 0xCB;
 					TIM2->CNTRH = 0xF3;	
 					is_repeat = 0;
@@ -590,6 +585,33 @@ void setTime(uint8_t hr, uint8_t min, uint8_t sec, uint8_t wd, uint8_t d, uint8_
 	while (((I2C->CR2 >> 1) & 0x01) == 0x01);
 	
 }
+void init_time_display(void){
+	data_time[0] = test_i2c(0x00);
+	data_time[1] = test_i2c(0x01);
+	data_time[2] = test_i2c(0x02);
+	data_time[3] = test_i2c(0x03);
+	data_time[4] = test_i2c(0x04);
+	data_time[5] = test_i2c(0x05);
+	data_time[6] = test_i2c(0x06);
+}
+void lunar_convert(void){
+	uint8_t da,db,day,mon,year;
+	uint8_t lmon;
+
+	day = bcd2dec(data_time[4]);
+	mon = bcd2dec(data_time[5]);
+	year = bcd2dec(data_time[6]);
+	da = ALdauthangDL[year - 10][mon-1];
+	db = DLdauthangAL[year - 10][mon-1];	
+
+	if(db <= day){
+		data_time[7] = day-db+1;
+		data_time[8] = thangALdauthangAL[year-10][mon-1];				
+	}else {
+		data_time[7] = day+da-1;
+		data_time[8] = thangALdauthangDL[year-10][mon-1];		
+	}
+}
 uint16_t timer1_value = 0, timer_second = 1000;
 uint8_t hihi = 0;
 uint16_t a = 5, b = 65530, c = 0;
@@ -628,6 +650,7 @@ main()
 	enableInterrupts();
 	//setTime(13, 35, 00, 4, 28, 10, 20);
 	//test_i2c(0x00);
+	init_time_display();
 	while (1){
 		timer1_value = TIM1->CNTRH<<8;
 		timer1_value |= TIM1->CNTRL;
@@ -637,36 +660,256 @@ main()
 		//GPIOD->ODR = led7_d[8];// led data right from second
 		//GPIOE->ODR = 0b00001000;//
 		//GPIOG->ODR = 0b00000000;//
-		if(timer1_value - timer_second > 500){
+		if((timer1_value - timer_second > 500) && (mode_value == 0)){
 			timer_second = timer1_value;
 			if(DIG[DOT_SEC] == 0) DIG[DOT_SEC] = 1;
 				else DIG[DOT_SEC] = 0;
-				//HOUR_X - 1
+
 			data_time[0] = test_i2c(0x00);
-			data_time[1] = test_i2c(0x01);
-			data_time[2] = test_i2c(0x02);
-			//data_time[3] = test_i2c(0x03);
-			//data_time[HOUR_X -1] = test_i2c(0x04);
-			//data_time[HOUR_X -1] = test_i2c(0x05);
-			//data_time[6] = test_i2c(0x06);
+			if(data_time[0] == 0){
+				data_time[1] = test_i2c(0x01);
+				data_time[2] = test_i2c(0x02);
+				data_time[3] = test_i2c(0x03);
+				data_time[4] = test_i2c(0x04);
+				data_time[5] = test_i2c(0x05);
+				data_time[6] = test_i2c(0x06);
+				
+			}
+			
+			data_time_display[DAY] = bcd2dec(data_time[3]);
 			
 			data_time_display[HOUR_X] = bcd2dec(data_time[2]) / 10;
 			data_time_display[HOUR_Y] = bcd2dec(data_time[2]) % 10;
 			data_time_display[MIN_X] = bcd2dec(data_time[1]) / 10;
 			data_time_display[MIN_Y] = bcd2dec(data_time[1]) % 10;
 			
+			data_time_display[DATE_X] = bcd2dec(data_time[4]) / 10;
+			data_time_display[DATE_Y] = bcd2dec(data_time[4]) % 10;
+			
+			data_time_display[MONTH_X] = bcd2dec(data_time[5]) / 10;
+			data_time_display[MONTH_Y] = bcd2dec(data_time[5]) % 10;
+			
+			data_time_display[YEAR_X] = bcd2dec(data_time[6]) / 10;
+			data_time_display[YEAR_Y] = bcd2dec(data_time[6]) % 10;
+			
+			lunar_convert();
+			data_time_display[AM_D_X] = data_time[7] / 10;
+			data_time_display[AM_D_Y] = data_time[7] % 10;
+			
+			data_time_display[AM_M_X] = data_time[8] / 10;
+			data_time_display[AM_M_Y] = data_time[8] % 10;
+			
+			
+			
 		}
 
 		
 		if(done == 1){
-			if(code_ir == 0x40BDA25D){ data_time_display[10] = 9; reset_to_new_cmd();}
-			/*
-			else if(data == 0xFFFFFFFF){
-					mode = 1; delay(50000); mode = 0; delay(50000);
-					reset_to_new_cmd();
+			if(code_ir == EDIT_MODE){ 
+				mode_value++; 
+				if(mode_value > 7) mode_value = 0;
+				reset_to_new_cmd();
+				switch(mode_value){
+					case 0:
+						DIG[DAY] = 0; 
+						DIG[DATE_X] = 0;DIG[DATE_Y] = 0;
+						DIG[MONTH_X] = 0;DIG[MONTH_Y] = 0;
+						DIG[YEAR_X] = 0;DIG[YEAR_Y] = 0;
+						DIG[HOUR_X] = 0;DIG[HOUR_Y] = 0;
+						DIG[MIN_X] = 0;DIG[MIN_Y] = 0;
+						DIG[AM_D_X] = 0;DIG[AM_D_Y] = 0;
+						DIG[AM_M_X] = 0;DIG[AM_M_Y] = 0;
+						DIG[TEMP_X] = 0;DIG[TEMP_Y] = 0;
+						break;
+					case 1:
+						DIG[DAY] = 0; DIG[DOT_SEC] = 0;
+						DIG[DATE_X] = 1;DIG[DATE_Y] = 1;
+						DIG[MONTH_X] = 1;DIG[MONTH_Y] = 1;
+						DIG[YEAR_X] = 1;DIG[YEAR_Y] = 1;
+						DIG[HOUR_X] = 1;DIG[HOUR_Y] = 1;
+						DIG[MIN_X] = 1;DIG[MIN_Y] = 1;
+						DIG[AM_D_X] = 1;DIG[AM_D_Y] = 1;
+						DIG[AM_M_X] = 1;DIG[AM_M_Y] = 1;
+						DIG[TEMP_X] = 1;DIG[TEMP_Y] = 1;
+						data_time[1] = bcd2dec(data_time[1]);
+						data_time[2] = bcd2dec(data_time[2]);
+						data_time[3] = bcd2dec(data_time[3]);
+						data_time[4] = bcd2dec(data_time[4]);
+						data_time[5] = bcd2dec(data_time[5]);
+						data_time[6] = bcd2dec(data_time[6]);
+						break;
+					case 2:
+						DIG[DAY] = 1; DIG[DOT_SEC] = 0;
+						DIG[DATE_X] = 0;DIG[DATE_Y] = 0;
+						DIG[MONTH_X] = 1;DIG[MONTH_Y] = 1;
+						DIG[YEAR_X] = 1;DIG[YEAR_Y] = 1;
+						DIG[HOUR_X] = 1;DIG[HOUR_Y] = 1;
+						DIG[MIN_X] = 1;DIG[MIN_Y] = 1;
+						DIG[AM_D_X] = 1;DIG[AM_D_Y] = 1;
+						DIG[AM_M_X] = 1;DIG[AM_M_Y] = 1;
+						DIG[TEMP_X] = 1;DIG[TEMP_Y] = 1;
+						break;
+					case 3:
+						DIG[DAY] = 1; DIG[DOT_SEC] = 0;
+						DIG[DATE_X] = 1;DIG[DATE_Y] = 1;
+						DIG[MONTH_X] = 0;DIG[MONTH_Y] = 0;
+						DIG[YEAR_X] = 1;DIG[YEAR_Y] = 1;
+						DIG[HOUR_X] = 1;DIG[HOUR_Y] = 1;
+						DIG[MIN_X] = 1;DIG[MIN_Y] = 1;
+						DIG[AM_D_X] = 1;DIG[AM_D_Y] = 1;
+						DIG[AM_M_X] = 1;DIG[AM_M_Y] = 1;
+						DIG[TEMP_X] = 1;DIG[TEMP_Y] = 1;
+						break;
+					case 4:
+						DIG[DAY] = 1; DIG[DOT_SEC] = 0;
+						DIG[DATE_X] = 1;DIG[DATE_Y] = 1;
+						DIG[MONTH_X] = 1;DIG[MONTH_Y] = 1;
+						DIG[YEAR_X] = 0;DIG[YEAR_Y] = 0;
+						DIG[HOUR_X] = 1;DIG[HOUR_Y] = 1;
+						DIG[MIN_X] = 1;DIG[MIN_Y] = 1;
+						DIG[AM_D_X] = 1;DIG[AM_D_Y] = 1;
+						DIG[AM_M_X] = 1;DIG[AM_M_Y] = 1;
+						DIG[TEMP_X] = 1;DIG[TEMP_Y] = 1;
+						break;
+					case 5:
+						DIG[DAY] = 1; DIG[DOT_SEC] = 0;
+						DIG[DATE_X] = 1;DIG[DATE_Y] = 1;
+						DIG[MONTH_X] = 1;DIG[MONTH_Y] = 1;
+						DIG[YEAR_X] = 1;DIG[YEAR_Y] = 1;
+						DIG[HOUR_X] = 0;DIG[HOUR_Y] = 0;
+						DIG[MIN_X] = 1;DIG[MIN_Y] = 1;
+						DIG[AM_D_X] = 1;DIG[AM_D_Y] = 1;
+						DIG[AM_M_X] = 1;DIG[AM_M_Y] = 1;
+						DIG[TEMP_X] = 1;DIG[TEMP_Y] = 1;
+						break;
+					case 6:
+						DIG[DAY] = 1; DIG[DOT_SEC] = 0;
+						DIG[DATE_X] = 1;DIG[DATE_Y] = 1;
+						DIG[MONTH_X] = 1;DIG[MONTH_Y] = 1;
+						DIG[YEAR_X] = 1;DIG[YEAR_Y] = 1;
+						DIG[HOUR_X] = 1;DIG[HOUR_Y] = 1;
+						DIG[MIN_X] = 0;DIG[MIN_Y] = 0;
+						DIG[AM_D_X] = 1;DIG[AM_D_Y] = 1;
+						DIG[AM_M_X] = 1;DIG[AM_M_Y] = 1;
+						DIG[TEMP_X] = 1;DIG[TEMP_Y] = 1;
+						break;
+					case 7:
+						mode_value = 0;
+						setTime(data_time[2], data_time[1], 00, data_time[3], data_time[4], data_time[5], data_time[6]);
+						DIG[DAY] = 0; 
+						DIG[DATE_X] = 0;DIG[DATE_Y] = 0;
+						DIG[MONTH_X] = 0;DIG[MONTH_Y] = 0;
+						DIG[YEAR_X] = 0;DIG[YEAR_Y] = 0;
+						DIG[HOUR_X] = 0;DIG[HOUR_Y] = 0;
+						DIG[MIN_X] = 0;DIG[MIN_Y] = 0;
+						DIG[AM_D_X] = 0;DIG[AM_D_Y] = 0;
+						DIG[AM_M_X] = 0;DIG[AM_M_Y] = 0;
+						DIG[TEMP_X] = 0;DIG[TEMP_Y] = 0;
+						data_time_display[DAY] = data_time[3];
+			
+						data_time_display[HOUR_X] = data_time[2] / 10;
+						data_time_display[HOUR_Y] = data_time[2] % 10;
+						data_time_display[MIN_X] = data_time[1] / 10;
+						data_time_display[MIN_Y] = data_time[1] % 10;
+						
+						data_time_display[DATE_X] = data_time[4] / 10;
+						data_time_display[DATE_Y] = data_time[4] % 10;
+						
+						data_time_display[MONTH_X] = data_time[5] / 10;
+						data_time_display[MONTH_Y] = data_time[5] % 10;
+						
+						data_time_display[YEAR_X] = data_time[6] / 10;
+						data_time_display[YEAR_Y] = data_time[6] % 10;
+						
+						lunar_convert();
+						data_time_display[AM_D_X] = data_time[7] / 10;
+						data_time_display[AM_D_Y] = data_time[7] % 10;
+						
+						data_time_display[AM_M_X] = data_time[8] / 10;
+						data_time_display[AM_M_Y] = data_time[8] % 10;
+						
+						break;
+				}
+			}	else if(code_ir == KEY_INC){ 
+				switch(mode_value){
+					case 1:
+						data_time[3]++;
+						if(data_time[3] > 7) data_time[3] = 1;
+						data_time_display[DAY] = bcd2dec(data_time[3]);
+						break;
+					case 2:
+						data_time[4]++;
+						if(data_time[4] > 31) data_time[4] = 1;
+						data_time_display[DATE_X] = data_time[4] / 10;
+						data_time_display[DATE_Y] = data_time[4] % 10;
+						break;
+					case 3:
+						data_time[5]++;
+						if(data_time[5] > 12) data_time[5] = 1;
+						data_time_display[MONTH_X] = data_time[5] / 10;
+						data_time_display[MONTH_Y] = data_time[5] % 10;
+						break;
+					case 4:
+						data_time[6]++;
+						if(data_time[6] > 99) data_time[6] = 0;
+						data_time_display[YEAR_X] = data_time[6] / 10;
+						data_time_display[YEAR_Y] = data_time[6] % 10;
+						break;
+					case 5:
+						data_time[2]++;
+						if(data_time[2] > 23) data_time[2] = 0;
+						data_time_display[HOUR_X] = data_time[2] / 10;
+						data_time_display[HOUR_Y] = data_time[2] % 10;
+						break;
+					case 6:
+						data_time[1]++;
+						if(data_time[1] > 59) data_time[1] = 0;
+						data_time_display[MIN_X] = data_time[1] / 10;
+						data_time_display[MIN_Y] = data_time[1] % 10;
+						break;
+				}
+				reset_to_new_cmd();
+			} else if(code_ir == KEY_DEC){ 
+				switch(mode_value){
+					case 1:
+						data_time[3]--;
+						if(data_time[3] < 1) data_time[3] = 7;
+						data_time_display[DAY] = bcd2dec(data_time[3]);
+						break;
+					case 2:
+						data_time[4]--;
+						if(data_time[4] < 1) data_time[4] = 31;
+						data_time_display[DATE_X] = data_time[4] / 10;
+						data_time_display[DATE_Y] = data_time[4] % 10;
+						break;
+					case 3:
+						data_time[5]--;
+						if(data_time[5] < 1) data_time[5] = 12;
+						data_time_display[MONTH_X] = data_time[5] / 10;
+						data_time_display[MONTH_Y] = data_time[5] % 10;
+						break;
+					case 4:
+						data_time[6]--;
+						if(data_time[6] < 1) data_time[6] = 99;
+						data_time_display[YEAR_X] = data_time[6] / 10;
+						data_time_display[YEAR_Y] = data_time[6] % 10;
+						break;
+					case 5:
+						data_time[2]--;
+						if(data_time[2] > 200) data_time[2] = 23;
+						data_time_display[HOUR_X] = data_time[2] / 10;
+						data_time_display[HOUR_Y] = data_time[2] % 10;
+						break;
+					case 6:
+						data_time[1]--;
+						if(data_time[1] > 200) data_time[1] = 59;
+						data_time_display[MIN_X] = data_time[1] / 10;
+						data_time_display[MIN_Y] = data_time[1] % 10;
+						break;
+				}
+				reset_to_new_cmd();
 			}
-			*/
-			else {data_time_display[10] = 0; reset_to_new_cmd();}
+			else {mode_value = 0; reset_to_new_cmd();}
 		}
 	}
 }
