@@ -118,6 +118,7 @@ uint8_t reg = 0;
 uint8_t data_time[9] = {1};
 
 //I2C end init
+void check_button(void);
 void delay(uint16_t nCount)
 {
   /* Decrement nCount value */
@@ -199,9 +200,8 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		{
 			TIM4->ARR  = data_time_on_pairs[5];
 			GPIOB->ODR  =    led7_b[data_time_display[YEAR_Y]];
-
-			GPIOD->ODR  =    led7_d_1[data_time_display[AM_M_Y]];			
-						
+			GPIOD->ODR  =    led7_d_1[data_time_display[AM_M_Y]];
+			
 			GPIOA->ODR = 0b00001100 & (~(DIG[YEAR_Y] << 3));
 			GPIOC->ODR = 0b00000000;
 			GPIOE->ODR = 0b00100000 & (~(DIG[AM_M_Y] << 5));
@@ -255,8 +255,9 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		case 16: //7
 		case 18: //8
 		{
-			GPIOB->ODR = 0x00;
-			GPIOD->ODR = 0x00;
+			GPIOB->ODR = 0xFF;
+			GPIOD->ODR = 0xFF;
+			check_button();
 			TIM4->ARR  = 255 - data_time_on_pairs[(seg/2) - 1];
 			GPIOA->ODR = 0b00000100;
 			
@@ -612,14 +613,7 @@ void lunar_convert(void){
 		data_time[8] = thangALdauthangDL[year-10][mon-1];		
 	}
 }
-uint16_t timer1_value = 0, timer_second = 1000;
-uint8_t hihi = 0;
-uint16_t a = 5, b = 65530, c = 0;
-main()
-{
-	
-	CLK->CKDIVR = 0x00; // Set the frequency to 16 MHz
-	delay(1000);
+void init_output(void){
 	GPIOA->DDR = 0b01111110;//
 	GPIOB->DDR = 0b11111110;//
 	GPIOC->DDR = 0b11111110;//
@@ -638,41 +632,121 @@ main()
 	GPIOB->CR2 = 0b11111110;
 	GPIOC->CR2 = 0b11111110;
 	GPIOD->CR2 = 0b11111111;
-	GPIOE->CR2 = 0b11101001;
+	GPIOE->CR2 = 0b10101001;
 	GPIOG->CR2 = 0b00000011;
+}
+void init_input(void){
+	GPIOA->DDR = 0b01111110;//
+	GPIOB->DDR = 0b11111110;//
+	GPIOC->DDR = 0b11101110;//
+	GPIOD->DDR = 0b11111111;//
+	GPIOE->DDR = 0b10001000;//
+	GPIOG->DDR = 0b00000011;//
+	
+	GPIOA->CR1 = 0b01111110;
+	GPIOB->CR1 = 0b11111110;
+	GPIOC->CR1 = 0b11111110;
+	GPIOD->CR1 = 0b11111111;
+	GPIOE->CR1 = 0b11101000;
+	GPIOG->CR1 = 0b00000011;
+							
+	GPIOA->CR2 = 0b01111110;
+	GPIOB->CR2 = 0b11111110;
+	GPIOC->CR2 = 0b11101110;
+	GPIOD->CR2 = 0b11111111;
+	GPIOE->CR2 = 0b10001001;
+	GPIOG->CR2 = 0b00000011;
+	GPIOD->ODR = 0xFF;
+	
+}
+uint16_t timer1_value = 0, timer_second = 1000, timer_button = 0, timer_check_button = 0;
+uint8_t button_set = 0, button_up = 0, button_down = 0, temp = 0;
+void check_button(void){
+	init_input();
+	if(( ((GPIOE->IDR >> 6) & 0x01) == 0x00) && (button_set == 0)){
+		timer_button = TIM1->CNTRH<<8;
+		timer_button |= TIM1->CNTRL;
+		button_set = 1;
+	} else {
+		button_set = 0;
+	}
+	if((button_set) && (timer1_value - timer_button > 1000)){
+		button_set = 0;
+		code_ir = EDIT_MODE;
+		done = 1;
+		if(mode_value == 0) init_input();
+		while(((GPIOE->IDR >> 6) & 0x01) == 0x00) temp = 1;
+	}
+	if(( ((GPIOE->IDR >> 5) & 0x01) == 0x00) && (button_up == 0) && (mode_value != 0)){
+		timer_button = TIM1->CNTRH<<8;
+		timer_button |= TIM1->CNTRL;
+		button_up = 1;
+	} else {
+		button_up = 0;
+	}
+	if((button_up) && (timer1_value - timer_button > 1000) && (mode_value != 0)){
+		button_up = 0;
+		code_ir = KEY_INC;
+		done = 1;
+		while(((GPIOE->IDR >> 5) & 0x01) == 0x00) temp = 2;
+	}
+	if(( ((GPIOC->IDR >> 4) & 0x01) == 0x00) && (button_down == 0) && (mode_value != 0)){
+		timer_button = TIM1->CNTRH<<8;
+		timer_button |= TIM1->CNTRL;
+		button_down = 1;
+	} else {
+		button_down = 0;
+	}
+	if((button_down) && (timer1_value - timer_button > 1000) && (mode_value != 0)){
+		button_down = 0;
+		code_ir = KEY_DEC;
+		done = 1;
+		while(((GPIOC->IDR >> 4) & 0x01) == 0x00);
+	}
+	init_output();
+}
+main()
+{
+	
+	CLK->CKDIVR = 0x00; // Set the frequency to 16 MHz
+	delay(1000);
+	init_output();
 	timer1_init();
 	timer4_init();
 	timer2_init();
-	i2c_init();
+	//i2c_init();
 	EXTI->CR2 = 0b00000010;
 	//ITC->ISPR2 = 0b00111111;
 	//ITC->ISPR6 = 0b01111111;
 	enableInterrupts();
 	//setTime(13, 35, 00, 4, 28, 10, 20);
 	//test_i2c(0x00);
-	init_time_display();
+	//init_time_display();
 	while (1){
 		timer1_value = TIM1->CNTRH<<8;
 		timer1_value |= TIM1->CNTRL;
+		timer_button = timer1_value; 
 		//GPIOA->ODR = 0b01000100;//
 		//GPIOB->ODR = led7_b[8];// led data left from second
 		//GPIOC->ODR = 0b00000000;//
 		//GPIOD->ODR = led7_d[8];// led data right from second
 		//GPIOE->ODR = 0b00001000;//
 		//GPIOG->ODR = 0b00000000;//
+
+		
 		if((timer1_value - timer_second > 500) && (mode_value == 0)){
 			timer_second = timer1_value;
 			if(DIG[DOT_SEC] == 0) DIG[DOT_SEC] = 1;
 				else DIG[DOT_SEC] = 0;
 
-			data_time[0] = test_i2c(0x00);
+			//data_time[0] = test_i2c(0x00);
 			if(data_time[0] == 0){
-				data_time[1] = test_i2c(0x01);
-				data_time[2] = test_i2c(0x02);
-				data_time[3] = test_i2c(0x03);
-				data_time[4] = test_i2c(0x04);
-				data_time[5] = test_i2c(0x05);
-				data_time[6] = test_i2c(0x06);
+				//data_time[1] = test_i2c(0x01);
+				//data_time[2] = test_i2c(0x02);
+				//data_time[3] = test_i2c(0x03);
+				//data_time[4] = test_i2c(0x04);
+				//data_time[5] = test_i2c(0x05);
+				//data_time[6] = test_i2c(0x06);
 				
 			}
 			
