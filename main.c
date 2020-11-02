@@ -4,7 +4,6 @@
  */
 #include "stm8s.h"
 #include "lunar_data.h"
-
 //E B7
 //C B5
 //D B6
@@ -100,6 +99,7 @@ uint8_t seg = 1, value = 99, temp_ir = 0;
 uint8_t data_time_display[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
 uint8_t data_time_on_pairs[9] = {150, 150, 150, 150, 150, 150, 150, 150, 20};
 uint8_t mode_value = 0;
+double temperature = 0;
 //IR
 uint8_t done = 0, is_repeat = 0;
 int16_t count_ms1 = 0, count_bit_ir = 0, start_status = -1;
@@ -116,7 +116,6 @@ uint32_t code_ir = 0;
 #define I2C_WRITE	0
 uint8_t reg = 0;
 uint8_t data_time[9] = {1};
-
 //I2C end init
 void check_button(void);
 void delay(uint16_t nCount)
@@ -240,7 +239,7 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOD->ODR  = led7_d_1[data_time_display[TEMP_Y]];
 						
 			GPIOA->ODR = 0b00000100 & (~(DIG[DOT_SEC] << 2));			
-			GPIOC->ODR = 0b00000100 & (~(DIG[TEMP_Y] << 2));
+			GPIOC->ODR = 0b00000100;
 			GPIOE->ODR = 0b00000000;
 			GPIOG->ODR = 0b00000000;
 			break;
@@ -257,7 +256,7 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 		{
 			GPIOB->ODR = 0xFF;
 			GPIOD->ODR = 0xFF;
-			check_button();
+			//check_button();
 			TIM4->ARR  = 255 - data_time_on_pairs[(seg/2) - 1];
 			GPIOA->ODR = 0b00000100;
 			
@@ -705,6 +704,60 @@ void check_button(void){
 	}
 	init_output();
 }
+void SetupADC(void)
+{
+	ADC1->CR1 |= (1 < 0);  //  Turn ADC on, note a second set is required to start the conversion.
+	ADC1->CSR  = 0x00;      // AIN0.
+	ADC1->CR2  |= (1 << 3);  //  Data is right aligned.
+}
+const double BALANCE_RESISTOR   = 10000.0;
+const double MAX_ADC            = 1023.0;
+const double BETA               = 3435l;
+const double ROOM_TEMP          = 298.15;   // room temperature in Kelvin
+const double RESISTOR_ROOM_TEMP = 10000.0;
+double ln(double x)
+{
+    double old_sum = 0.0;
+    double xmlxpl = (x - 1) / (x + 1);
+    double xmlxpl_2 = xmlxpl * xmlxpl;
+    double denom = 1.0;
+    double frac = xmlxpl;
+    double term = frac;                 // denom start from 1.0
+    double sum = term;
+
+    while ( sum != old_sum )
+    {
+        old_sum = sum;
+        denom += 2.0;
+        frac *= xmlxpl_2;
+        sum += frac / denom;
+    }
+    return 2.0 * sum;
+}
+#define LN10 2.3025850929940456840179914546844
+
+double log10( double x ) {
+    return ln(x) / LN10;    
+}
+double adc_temperature(double adcAverage){
+	double rThermistor = 0;            // Holds thermistor resistance value
+  double tKelvin     = 0;            // Holds calculated temperature
+  double tCelsius    = 0;            // Hold temperature in celsius
+  //double adcAverage  = 0;            // Holds the average voltage measurement
+	
+	rThermistor = BALANCE_RESISTOR / ( (MAX_ADC / adcAverage) - 1);
+	tKelvin = (BETA * ROOM_TEMP) / 
+            (BETA + (ROOM_TEMP * log10(rThermistor / RESISTOR_ROOM_TEMP)));
+	tCelsius = tKelvin - 273.15;  // convert kelvin to celsius 
+
+  return rThermistor;    // Return the temperature in Celsius
+}
+double read_adc(void){
+	unsigned char low, high;
+	low = ADC1->DRL;            //    Extract the ADC reading.
+	high = ADC1->DRH;
+	return (double) (1023.0 - ((high * 256.0) + low));
+}
 main()
 {
 	
@@ -714,6 +767,7 @@ main()
 	timer1_init();
 	timer4_init();
 	timer2_init();
+	//SetupADC();
 	//i2c_init();
 	EXTI->CR2 = 0b00000010;
 	//ITC->ISPR2 = 0b00111111;
@@ -732,13 +786,18 @@ main()
 		//GPIOD->ODR = led7_d[8];// led data right from second
 		//GPIOE->ODR = 0b00001000;//
 		//GPIOG->ODR = 0b00000000;//
-
 		
 		if((timer1_value - timer_second > 500) && (mode_value == 0)){
 			timer_second = timer1_value;
-			if(DIG[DOT_SEC] == 0) DIG[DOT_SEC] = 1;
-				else DIG[DOT_SEC] = 0;
+			if(DIG[DOT_SEC] == 0) {
+				DIG[DOT_SEC] = 1;
+				//ADC1->CR1 = 0b00000001;
+			} else {
+				DIG[DOT_SEC] = 0;
+				
+				//temperature = adc_temperature(511.0);
 
+			}
 			//data_time[0] = test_i2c(0x00);
 			if(data_time[0] == 0){
 				//data_time[1] = test_i2c(0x01);
