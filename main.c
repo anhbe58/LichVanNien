@@ -13,7 +13,6 @@
 //B B1
 //0b00101000
 
-
 uint8_t led7_b[10]     = {0b00010000,0b11011100,0b00101000,0b10001000,0b11000100,0b10000010,0b00000010,0b11011000,0b00000000,0b10000000};
 
 
@@ -97,7 +96,7 @@ uint8_t led7_d_1[10] = {0b00010000,0b11011110,0b00101000,0b10001000,0b11000100,0
 uint8_t DIG[18] = {0};
 uint8_t seg = 1, value = 99, temp_ir = 0;
 uint8_t data_time_display[17] = {1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3};
-uint8_t data_time_on_pairs[9] = {150, 150, 150, 150, 150, 150, 150, 150, 20};
+uint8_t data_time_on_pairs[9] = {150, 150, 150, 150, 150, 150, 150, 150, 180};
 uint8_t mode_value = 0;
 double temperature = 0;
 //IR
@@ -239,8 +238,8 @@ INTERRUPT void TIM4_UPD_OVF_IRQHandler(void)
 			GPIOD->ODR  = led7_d_1[data_time_display[TEMP_Y]];
 						
 			GPIOA->ODR = 0b00000100 & (~(DIG[DOT_SEC] << 2));			
-			GPIOC->ODR = 0b00000100;
-			GPIOE->ODR = 0b00000000;
+			GPIOC->ODR = 0b00000000;
+			GPIOE->ODR = 0b01000000 & (~(DIG[TEMP_Y] << 6));
 			GPIOG->ODR = 0b00000000;
 			break;
 		}
@@ -617,7 +616,7 @@ void init_output(void){
 	GPIOB->DDR = 0b11111110;//
 	GPIOC->DDR = 0b11111110;//
 	GPIOD->DDR = 0b11111111;//
-	GPIOE->DDR = 0b10101000;//
+	GPIOE->DDR = 0b11101000;//
 	GPIOG->DDR = 0b00000011;//
 	
 	GPIOA->CR1 = 0b01111110;
@@ -631,31 +630,31 @@ void init_output(void){
 	GPIOB->CR2 = 0b11111110;
 	GPIOC->CR2 = 0b11111110;
 	GPIOD->CR2 = 0b11111111;
-	GPIOE->CR2 = 0b10101001;
+	GPIOE->CR2 = 0b11101001;
 	GPIOG->CR2 = 0b00000011;
 }
 void init_input(void){
-	GPIOA->DDR = 0b01111110;//
-	GPIOB->DDR = 0b11111110;//
-	GPIOC->DDR = 0b11101110;//
-	GPIOD->DDR = 0b11111111;//
-	GPIOE->DDR = 0b10001000;//
-	GPIOG->DDR = 0b00000011;//
+	//GPIOA->DDR = 0b01111110;//
+	//GPIOB->DDR = 0b11111110;//
+	//GPIOC->DDR = 0b11101110;//
+	//GPIOD->DDR = 0b11111111;//
+	//GPIOE->DDR = 0b10001000;//
+	//GPIOG->DDR = 0b00000011;//
 	
-	GPIOA->CR1 = 0b01111110;
-	GPIOB->CR1 = 0b11111110;
-	GPIOC->CR1 = 0b11111110;
-	GPIOD->CR1 = 0b11111111;
-	GPIOE->CR1 = 0b11101000;
-	GPIOG->CR1 = 0b00000011;
+	//GPIOA->CR1 = 0b01111110;
+	//GPIOB->CR1 = 0b11111110;
+	//GPIOC->CR1 = 0b11111110;
+	//GPIOD->CR1 = 0b11111111;
+	//GPIOE->CR1 = 0b11101000;
+	//GPIOG->CR1 = 0b00000011;
 							
-	GPIOA->CR2 = 0b01111110;
-	GPIOB->CR2 = 0b11111110;
-	GPIOC->CR2 = 0b11101110;
-	GPIOD->CR2 = 0b11111111;
-	GPIOE->CR2 = 0b10001001;
-	GPIOG->CR2 = 0b00000011;
-	GPIOD->ODR = 0xFF;
+	//GPIOA->CR2 = 0b01111110;
+	//GPIOB->CR2 = 0b11111110;
+	//GPIOC->CR2 = 0b11101110;
+	//GPIOD->CR2 = 0b11111111;
+	//GPIOE->CR2 = 0b10001001;
+	//GPIOG->CR2 = 0b00000011;
+	//GPIOD->ODR = 0xFF;
 	
 }
 uint16_t timer1_value = 0, timer_second = 1000, timer_button = 0, timer_check_button = 0;
@@ -712,7 +711,7 @@ void SetupADC(void)
 }
 const double BALANCE_RESISTOR   = 10000.0;
 const double MAX_ADC            = 1023.0;
-const double BETA               = 3435l;
+const double BETA               = 3974;
 const double ROOM_TEMP          = 298.15;   // room temperature in Kelvin
 const double RESISTOR_ROOM_TEMP = 10000.0;
 double ln(double x)
@@ -750,7 +749,7 @@ double adc_temperature(double adcAverage){
             (BETA + (ROOM_TEMP * log10(rThermistor / RESISTOR_ROOM_TEMP)));
 	tCelsius = tKelvin - 273.15;  // convert kelvin to celsius 
 
-  return rThermistor;    // Return the temperature in Celsius
+  return tCelsius;    // Return the temperature in Celsius
 }
 double read_adc(void){
 	unsigned char low, high;
@@ -767,45 +766,44 @@ main()
 	timer1_init();
 	timer4_init();
 	timer2_init();
-	//SetupADC();
-	//i2c_init();
+	SetupADC();
+	i2c_init();
 	EXTI->CR2 = 0b00000010;
 	//ITC->ISPR2 = 0b00111111;
 	//ITC->ISPR6 = 0b01111111;
 	enableInterrupts();
 	//setTime(13, 35, 00, 4, 28, 10, 20);
 	//test_i2c(0x00);
-	//init_time_display();
+	init_time_display();
 	while (1){
 		timer1_value = TIM1->CNTRH<<8;
 		timer1_value |= TIM1->CNTRL;
 		timer_button = timer1_value; 
-		//GPIOA->ODR = 0b01000100;//
+		//GPIOA->ODR = 0b00000100;//
 		//GPIOB->ODR = led7_b[8];// led data left from second
 		//GPIOC->ODR = 0b00000000;//
 		//GPIOD->ODR = led7_d[8];// led data right from second
-		//GPIOE->ODR = 0b00001000;//
+		//GPIOE->ODR = 0b01000000;//
 		//GPIOG->ODR = 0b00000000;//
-		
 		if((timer1_value - timer_second > 500) && (mode_value == 0)){
 			timer_second = timer1_value;
 			if(DIG[DOT_SEC] == 0) {
 				DIG[DOT_SEC] = 1;
-				//ADC1->CR1 = 0b00000001;
+				ADC1->CR1 = 0b00000001;
 			} else {
 				DIG[DOT_SEC] = 0;
 				
-				//temperature = adc_temperature(511.0);
+				temperature = adc_temperature(read_adc());
 
 			}
-			//data_time[0] = test_i2c(0x00);
+			data_time[0] = test_i2c(0x00);
 			if(data_time[0] == 0){
-				//data_time[1] = test_i2c(0x01);
-				//data_time[2] = test_i2c(0x02);
-				//data_time[3] = test_i2c(0x03);
-				//data_time[4] = test_i2c(0x04);
-				//data_time[5] = test_i2c(0x05);
-				//data_time[6] = test_i2c(0x06);
+				data_time[1] = test_i2c(0x01);
+				data_time[2] = test_i2c(0x02);
+				data_time[3] = test_i2c(0x03);
+				data_time[4] = test_i2c(0x04);
+				data_time[5] = test_i2c(0x05);
+				data_time[6] = test_i2c(0x06);
 				
 			}
 			
@@ -832,6 +830,8 @@ main()
 			data_time_display[AM_M_X] = data_time[8] / 10;
 			data_time_display[AM_M_Y] = data_time[8] % 10;
 			
+			data_time_display[TEMP_X] = (uint8_t) temperature / 10;
+			data_time_display[TEMP_Y] = (uint8_t) temperature % 10;
 			
 			
 		}
@@ -928,7 +928,7 @@ main()
 						break;
 					case 7:
 						mode_value = 0;
-						setTime(data_time[2], data_time[1], 00, data_time[3], data_time[4], data_time[5], data_time[6]);
+						//setTime(data_time[2], data_time[1], 00, data_time[3], data_time[4], data_time[5], data_time[6]);
 						DIG[DAY] = 0; 
 						DIG[DATE_X] = 0;DIG[DATE_Y] = 0;
 						DIG[MONTH_X] = 0;DIG[MONTH_Y] = 0;
@@ -1044,5 +1044,6 @@ main()
 			}
 			else {mode_value = 0; reset_to_new_cmd();}
 		}
+		
 	}
 }
